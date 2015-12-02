@@ -3,14 +3,7 @@ library(data.table)
 DT <- fread("train.csv")
 DT2 <- fread("test.csv")
 
-#plot a linear regression between Ret_121 and Feature_1
-lm(DT$Ret_121~DT$Feature_1)
-fit <- lm(DT$Ret_121~DT$Feature_1)
-plot(DT$Ret_121,DT$Feature_1)
-abline(fit)
-
-
-#Split training dataset into training/validation 
+#Split training dataset into training/validation & Cross Validation
 library(caret)
 set.seed(100)
 inTraining <- createDataPartition(DT$Ret_121, p = .75, list = FALSE)
@@ -24,8 +17,6 @@ fitControl <- trainControl(## 10-fold CV
   ## repeated ten times
   #repeats = 10
 )
-
-#predictors <- grep("Ret_[1-9]", names(DT), value=T)[1:119]
 
 training <- na.omit(training)
 
@@ -57,8 +48,10 @@ for(n in pr){
   s_out <- sign(out) == sign(validation$Ret_121)
   table(s_out)
   
+  #Correlation 
   cor(out, validation$Ret_121)
   
+  #Predict the outcome in testing dataset
   predict.train(fit, newdata=
                   DT2[, .SD, .SDcols=grep("Ret_[1-9]", names(DT2), value=T)[1:119]])
 
