@@ -3,6 +3,8 @@ library(data.table)
 DT <- fread("train.csv")
 DT2 <- fread("test.csv")
 
+DT <- DT[1:1000, ]
+
 #Split training dataset into training/validation & Cross Validation
 library(caret)
 set.seed(100)
@@ -64,3 +66,5 @@ for(n in pr){
 }
 
 resDT[, remove_it:=NULL]
+
+write.table(resDT,file="out.csv", quote = F)
