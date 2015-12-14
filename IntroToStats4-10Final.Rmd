@@ -1,0 +1,121 @@
+---
+title: "Intro To Stats 4-10 Commit1"
+author: "Richard"
+date: "December 10, 2015"
+output: html_document
+---
+This is the R Markdown for Problem 4-10 in Intro to Statistical Learning book.
+
+1. Load the data
+```{r}
+library(data.table)
+library(ISLR)
+data("Weekly")
+names(Weekly)
+attach(Weekly)
+```
+
+2.1 Summarize the data
+```{r}
+summary(Weekly)
+```
+
+2.2 Correlation between each predictor and output
+```{r}
+pairs(Weekly)
+cor(Weekly[,-ncol(Weekly)])
+```
+Conclusion1 Obvious correlation between volume and year
+
+3.1 Test the significance of each predictor
+```{r}
+glm.fit=glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data=Weekly ,family=binomial)
+summary(glm.fit)
+```
+
+3.2 Compute the coefficients of the model
+```{r}
+coef(glm.fit)
+summary(glm.fit)$coef
+```
+
+3.3 Convert probabilities to indicators, Up and Down
+```{r}
+glm.probs=predict(glm.fit,type="response") 
+contrasts(Weekly$Direction)
+```
+
+3.4 Calculate confusion matrix and the probability of making right prediction
+```{r}
+glm.pred=rep("Down","Up",nrow(Weekly))
+glm.pred[glm.probs >.5]="Up"
+table(glm.pred,Direction)
+mean(glm.pred==Direction)
+```
+
+4.1 Split data into training and testing datasets
+```{r}
+train =( Year <= 2008)
+Weekly.testing= Weekly [! train ,]
+```
+
+4.2 Fit and summarize a Logistic Model based on Lag2 only
+```{r}
+glm.fit=glm(Direction~Lag2,data=Weekly ,family=binomial, subset=train)
+summary(glm.fit)
+```
+
+4.3 Calculate confusion matrix and the probability of making right prediction
+```{r}
+glm.probs=predict(glm.fit,Weekly.testing,type="response")
+glm.pred=rep("Down",nrow(Weekly.testing))
+glm.pred[glm.probs >.5]="Up"
+table(glm.pred,Weekly.testing$Direction)
+mean(glm.pred==Weekly.testing$Direction)
+#Logistic Model, Using Lag2 as the only predictor,Prob=0.625
+```
+
+5.1 Fit the Model using Linear Discriminant Analysis
+```{r}
+library(MASS)
+lda.fit = lda(Direction ~ Lag2, data=Weekly, subset=train)
+lda.fit
+```
+
+5.2 Calculate confusion matrix and the probability of making right prediction
+```{r}
+lda.class=predict(lda.fit,Weekly.testing)$class
+table(lda.class,Weekly.testing$Direction)
+mean(lda.class==Weekly.testing$Direction)
+
+```
+
+6.1 Fit the Model using Quadratic Discriminant Analysis
+```{r}
+qda.fit = qda(Direction ~ Lag2, data=Weekly.testing, subset=train)
+qda.fit
+```
+
+6.2 Calculate confusion matrix and the probability of making right prediction
+```{r}
+qda.class=predict(qda.fit,Weekly.testing)$class
+table(qda.class,Weekly.testing$Direction)
+mean(qda.class==Weekly.testing$Direction)
+```
+
+7.1 Fit the Model using KNN 
+```{r}
+library(class)
+train.X=Weekly[train,"Lag2",drop=F]
+test.X=Weekly[!train,"Lag2",drop=F]
+train.Direction=Weekly[train,"Direction",drop=T]
+test.Direction=Weekly[!train,"Direction",drop=T]
+```
+
+7.2 Using k=5, calculate confusion matrix and the probability of making right prediction
+```{r}
+set.seed(1)
+knn.pred=knn(train.X,test.X,train.Direction,k=5)
+table(knn.pred,test.Direction)
+mean(knn.pred==test.Direction)
+```
